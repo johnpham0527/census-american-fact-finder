@@ -83,7 +83,7 @@ def outputDatabyZIPCodeList(ZIPCodeFileName, CSVoutputFileName, year, tableNumbe
             ZIPCodeValue = getAmericanCommunitySurvey5YearEstimateValue(year, tableNumber, zipCodeString)
             print(str(zipCodeString) + " " + str(ZIPCodeValue))
             outputWriter.writerow([zipCode,ZIPCodeValue]) #write the ZIP code and value to the CSV output file
-    outputFile.close() #close the file
+        outputFile.close() #close the file
 
 # Uncomment these lines to run sample queries
 #print(getAmericanCommunitySurvey5YearEstimateValue("17","B01003","11432")) #population count
