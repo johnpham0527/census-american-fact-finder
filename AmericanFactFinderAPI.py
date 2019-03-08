@@ -76,21 +76,22 @@ def outputDatabyZIPCodeList(ZIPCodeFileName, CSVoutputFileName, year, tableNumbe
     with open(ZIPCodeFileName, encoding = 'utf-8') as inputFile:
         outputFile = open(CSVoutputFileName,'w',newline=None) #open an output file for writing
         outputWriter = csv.writer(outputFile) #initiate the CSV writer object
-        zipCodeArray = []
         for zipCode in inputFile: #for each ZIP code in the input file
             zipCodeNum = int(zipCode) #this line removes the line break in the ZIP code
             zipCodeString = str(zipCodeNum) #convert to a string
             ZIPCodeValue = getAmericanCommunitySurvey5YearEstimateValue(year, tableNumber, zipCodeString)
             print(str(zipCodeString) + " " + str(ZIPCodeValue))
-            outputWriter.writerow([zipCode,ZIPCodeValue]) #write the ZIP code and value to the CSV output file
+            zipCodeNoWhiteSpace = zipCode.rstrip() #remove trailing white space
+            outputWriter.writerow([zipCodeNoWhiteSpace,ZIPCodeValue]) #write the ZIP code and value to the CSV output file
         outputFile.close() #close the file
 
 # Uncomment these lines to run sample queries
 #print(getAmericanCommunitySurvey5YearEstimateValue("17","B01003","11432")) #population count
-#print(getAmericanCommunitySurvey5YearEstimateValue("17","S2301","11432"))  #unemployment rate
-#print(getAmericanCommunitySurvey5YearEstimateValue("17","S1501","11432")) #percentage of people without a HS diploma or equivalency
-#print(getAmericanCommunitySurvey5YearEstimateValue("17","S1701","11432")) #poverty rate
-print(getAmericanCommunitySurvey5YearEstimateValue("17","DP02","11432")) #limited English language proficiency
+print("Statistics for ZIP Code 11432")
+print("Unemployment Rate: " + str(format(getAmericanCommunitySurvey5YearEstimateValue("17","S2301","11432"),'.1f')))  #unemployment rate. The code limits the output to one decimal place
+print("Percent without a High School Diploma or Equivalent: " + str(format(getAmericanCommunitySurvey5YearEstimateValue("17","S1501","11432"),'.1f'))) #percentage of people without a HS diploma or equivalency
+print("Poverty Rate: " + str(format(getAmericanCommunitySurvey5YearEstimateValue("17","S1701","11432"),'.1f'))) #poverty rate
+print("Percent with Limited English Language Proficiency: " + str(format(getAmericanCommunitySurvey5YearEstimateValue("17","DP02","11432"),'.1f'))) #limited English language proficiency
 
 # Uncomment these lines to generate a CSV file of values based on an input file containing a list of ZIP codes
 #outputDatabyZIPCodeList("QueensZIPCodes.txt","UnemploymentZIP.csv","17","S2301")
