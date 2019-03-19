@@ -88,10 +88,11 @@ def outputDatabyZIPCodeList(ZIPCodeFileName, CSVoutputFileName, year, tableNumbe
             outputWriter.writerow([zipCodeNoWhiteSpace,ZIPCodeValue]) #write the ZIP code and value to the CSV output file
         outputFile.close() #close the file
 
-def getAmericanCommunitySurvey5YearEstimateValueByCensusTract(year, tableNumber, censusTract):
+def getAmericanCommunitySurvey5YearEstimateValueByCensusTract(year, tableNumber, censusTract): #return a value from the American Community Survey (ACS) dataset given a year, ACS table number, and Queens County census tract number
     #build the URL string, given the parameters
     getUrl = "http://factfinder.census.gov/service/data/v1/en/programs/ACS/datasets/" + year + "_5YR/tables/" + tableNumber + "/data/1400000US" + censusTract
     parameters = {"maxResults":1, "key":"ea46e190165e1ee608d643fba987f8b3620ec1a9"} #parameters for the URL
+    
     requestResult = requests.get(getUrl,params=parameters) #submit the GET request
     resultText = requestResult.text #obtain the requested text
     jsonText = json.loads(resultText) #convert the requested text to JSON format
@@ -120,8 +121,157 @@ def getAmericanCommunitySurvey5YearEstimateValueByCensusTract(year, tableNumber,
         tableKey = "C411" #C411 refers to the percentage of people age 5 and older who speak English less than "very well," among those people who speak a language other than English
         return jsonText["data"]["rows"][0]["cells"][tableKey]["value"]
     
+    elif (tableNumber == "S0101"): #S0101 refers to the American Community Survey dataset for age and sex
+        tableKey = "C349" #C349 refers to the estimated total of older adults age 65+
+        return jsonText["data"]["rows"][0]["cells"][tableKey]["value"]
+
     else:
         print("Error: This code cannot handle Table Number " + tableNumber)
+
+
+def getACS5YearJSONByCensusTract(year, tableNumber, censusTract): #return JSON data from the American Community Survey (ACS) dataset given a year, ACS table number, and Queens County census tract number
+    #build the URL string, given the parameters
+    getUrl =    "http://factfinder.census.gov/service/data/v1/en/programs/ACS/datasets/" + year + "_5YR/tables/" + tableNumber + "/data/1400000US" + censusTract
+    parameters = {"maxResults":1, "key":"ea46e190165e1ee608d643fba987f8b3620ec1a9"} #parameters for the URL
+    #https://factfinder.census.gov/service/data/v1/en/programs/ACS/datasets/17_5YR/tables/S0101/data/1400000US36081002500?maxResults=10&key=ea46e190165e1ee608d643fba987f8b3620ec1a9
+
+    requestResult = requests.get(getUrl,params=parameters) #submit the GET request
+    resultText = requestResult.text #obtain the requested text
+    jsonText = json.loads(resultText) #convert the requested text to JSON format
+    return jsonText
+
+
+class MyCensusTract:
+    def __init__(self, QueensCountyCensusTractNum):
+        self.censusTractNum = QueensCountyCensusTractNum
+        self.year = "17" #this refers to the American Community Survey yearly 5-year estimate dataset to use. We are using the 2017 as the default.
+
+        #statistics describing the older adult population
+        self.totalPopulation = 0
+        self.totalOlderAdults65Plus = 0
+        self.percentageOlderAdults65Plus = 0
+        self.totalOlderAdults55Plus = 0
+        self.percentageOlderAdults55Plus = 0
+        self.totalOlderAdults65PlusKnownPovertyStatus = 0
+        self.povertyOlderAdults65Plus = 0
+        self.povertyPercentageOlderAdults65Plus = 0
+        self.totalAge65PlusHouseholders = 0
+        self.livingAloneAge65PlusHouseholders = 0
+        self.livingAlonePercentageAge65PlusHouseholders = 0
+
+        #statistics describing overall community needs
+        self.totalPopulation5Plus = 0
+        self.limitedEnglishTotalPopulation5Plus = 0
+        self.limitedEnglishPercentagePopulation5Plus = 0
+        self.povertyPopulation = 0
+        self.povertyPercentage = 0
+        self.totalPopulation25Plus = 0
+        self.noHighSchoolTotalPopulation25Plus = 0
+        self.noHighSchoolPercentagePopulation25Plus = 0
+        self.totalLaborForce = 0
+        self.unemployedLaborForce = 0
+        self.unemploymentPercentage = 0
+
+        self.fillOlderAdultValues() #initialize statistics describing the older adult population
+
+    def setYear(self,year): #this function changes which American Community Community yearly dataset to use
+        self.year = year
+
+    def fillOlderAdultValues(self):    
+        jsonText = getACS5YearJSONByCensusTract(self.year,"S0101",self.censusTractNum) #S0101 refers to the American Community Survey dataset for age and sex
+
+        self.totalPopulation = jsonText["data"]["rows"][0]["cells"]["C1"]["value"] #total population: table key = C1
+        self.totalOlderAdults65Plus = jsonText["data"]["rows"][0]["cells"]["C349"]["value"] #older adults age 65+: table key = C349
+        self.percentageOlderAdults65Plus = self.totalOlderAdults65Plus / self.totalPopulation * 100 #save this value as a number in the range of 0-100
+        populationAge55To59 = jsonText["data"]["rows"][0]["cells"]["C349"]["value"] #older adults age 55-59: table key = C145
+        self.totalOlderAdults55Plus = populationAge55To59 + self.totalOlderAdults65Plus 
+        self.percentageOlderAdults55Plus = self.totalOlderAdults55Plus / self.totalPopulation * 100 #save this value as a number in the range of 0-100
+
+        jsonText = getACS5YearJSONByCensusTract(self.year,"B17001",self.censusTractNum) #B17001 refers to the American Community Survey dataset called "Poverty Status in the Past 12 Months By Sex By Age"
+        belowPovertyLevelNumMales65To74 = jsonText["data"]["rows"][0]["cells"]["B17001_15_EST"]["value"] #number of males age 65-74 with income in past 12 months below poverty level
+        belowPovertyLevelNumMales75Plus = jsonText["data"]["rows"][0]["cells"]["B17001_16_EST"]["value"] #number of males age 75+ with income in past 12 months below poverty level
+        belowPovertyLevelNumFemales65To74 = jsonText["data"]["rows"][0]["cells"]["B17001_29_EST"]["value"] #number of females age 65-74 with income in past 12 months below poverty level
+        belowPovertyLevelNumFemales75Plus = jsonText["data"]["rows"][0]["cells"]["B17001_30_EST"]["value"] #number of females age 75+ with income in past 12 months below poverty level
+        atOrAbovePovertyLevelNumMales65To74 = jsonText["data"]["rows"][0]["cells"]["B17001_44_EST"]["value"] #number of males age 65-74 with income in past 12 months at or above poverty level
+        atOrAbovePovertyLevelNumMales75Plus = jsonText["data"]["rows"][0]["cells"]["B17001_45_EST"]["value"] #number of males age 75+ with income in past 12 months at or above poverty level
+        atOrAbovePovertyLevelNumFemales65To74 = jsonText["data"]["rows"][0]["cells"]["B17001_58_EST"]["value"] #number of females age 65-74 with income in past 12 months at or above poverty level
+        atOrAbovePovertyLevelNumFemales75Plus = jsonText["data"]["rows"][0]["cells"]["B17001_59_EST"]["value"] #number of females age 75+ with income in past 12 months at or above poverty level
+        self.povertyOlderAdults65Plus = belowPovertyLevelNumMales65To74 + belowPovertyLevelNumMales75Plus + belowPovertyLevelNumFemales65To74 + belowPovertyLevelNumFemales75Plus
+        self.totalOlderAdults65PlusKnownPovertyStatus = self.povertyOlderAdults65Plus + atOrAbovePovertyLevelNumMales65To74 + atOrAbovePovertyLevelNumMales75Plus + atOrAbovePovertyLevelNumFemales65To74 + atOrAbovePovertyLevelNumFemales75Plus
+        self.povertyPercentageOlderAdults65Plus = self.povertyOlderAdults65Plus / self.totalOlderAdults65PlusKnownPovertyStatus * 100 #save this value as a number in the range of 0-100
+
+        jsonText = getACS5YearJSONByCensusTract(self.year,"B11010",self.censusTractNum) #B11010 refers to the American Community Survey dataset called "Nonfamily Households By Sex of Householder By Living Alone By Age of Householder"
+        totalLivingAloneMaleHouseholders65Plus = jsonText["data"]["rows"][0]["cells"]["B11010_5_EST"]["value"]
+        totalNotLivingAloneMaleHouseholders65Plus = jsonText["data"]["rows"][0]["cells"]["B11010_8_EST"]["value"]
+        totalLivingAloneFemaleHouseholders65Plus = jsonText["data"]["rows"][0]["cells"]["B11010_12_EST"]["value"]
+        totalNotLivingAloneFemaleHouseholders65Plus = jsonText["data"]["rows"][0]["cells"]["B11010_15_EST"]["value"]
+        self.livingAloneAge65PlusHouseholders = totalLivingAloneMaleHouseholders65Plus + totalLivingAloneFemaleHouseholders65Plus
+        self.totalAge65PlusHouseholders = self.livingAloneAge65PlusHouseholders + totalNotLivingAloneMaleHouseholders65Plus + totalNotLivingAloneFemaleHouseholders65Plus
+        self.livingAlonePercentageAge65PlusHouseholders = self.livingAloneAge65PlusHouseholders / self.totalAge65PlusHouseholders * 100 #save this value as a number in the range of 0-100
+
+    #def setNeedsStatistics():
+    #Limited English proficiency
+    #poverty
+    #population without high school diploma
+    #unemployment
+    #percentages for each
+
+class MyCensusTractList:
+    def __init__(self, censusTractArray):
+        self.censusTractArray = list(censusTractArray)
+        self.totalPopulation = 0
+        self.totalOlderAdults65Plus = 0
+        self.percentageOlderAdults65Plus = 0
+        self.totalOlderAdults55Plus = 0
+        self.percentageOlderAdults55Plus = 0
+        self.totalOlderAdults65PlusKnownPovertyStatus = 0
+        self.povertyOlderAdults65Plus = 0
+        self.povertyPercentageOlderAdults65Plus = 0
+        self.totalAge65PlusHouseholders = 0
+        self.livingAloneAge65PlusHouseholders = 0
+        self.livingAlonePercentageAge65PlusHouseholders = 0
+
+        self.totalPopulation5Plus = 0
+        self.limitedEnglishTotalPopulation5Plus = 0
+        self.limitedEnglishPercentagePopulation5Plus = 0
+        self.povertyPopulation = 0
+        self.povertyPercentage = 0
+        self.totalPopulation25Plus = 0
+        self.noHighSchoolTotalPopulation25Plus = 0
+        self.noHighSchoolPercentagePopulation25Plus = 0
+        self.totalLaborForce = 0
+        self.unemployedLaborForce = 0
+        self.unemploymentPercentage = 0
+
+        self.fillOlderAdultValues() #initialize statistics describing the older adult population
+
+    def fillOlderAdultValues(self):
+        for censusTract in self.censusTractArray:
+            self.totalPopulation += censusTract.totalPopulation
+            self.totalOlderAdults65Plus += censusTract.totalOlderAdults65Plus
+            self.totalOlderAdults55Plus += censusTract.totalOlderAdults55Plus
+            self.totalOlderAdults65PlusKnownPovertyStatus += censusTract.totalOlderAdults65PlusKnownPovertyStatus
+            self.povertyOlderAdults65Plus += censusTract.povertyOlderAdults65Plus
+            self.totalAge65PlusHouseholders += censusTract.totalAge65PlusHouseholders
+            self.livingAloneAge65PlusHouseholders += censusTract.livingAloneAge65PlusHouseholders
+            self.totalPopulation5Plus += censusTract.totalPopulation5Plus
+            self.limitedEnglishTotalPopulation5Plus += censusTract.limitedEnglishTotalPopulation5Plus
+        self.percentageOlderAdults65Plus = self.totalOlderAdults65Plus / self.totalPopulation * 100 #save this value as a number in the range of 0-100
+        self.percentageOlderAdults55Plus = self.totalOlderAdults55Plus / self.totalPopulation * 100 #save this value as a number in the range of 0-100
+        self.povertyPercentageOlderAdults65Plus = self.povertyOlderAdults65Plus / self.totalOlderAdults65PlusKnownPovertyStatus * 100 #save this value as a number in the range of 0-100  
+        self.livingAlonePercentageAge65PlusHouseholders = self.livingAloneAge65PlusHouseholders / self.totalAge65PlusHouseholders * 100 #save this value as a number in the range of 0-100
+
+
+def createCensusTractArray(censusTractFileName):
+    censusTractArray = []
+    with open(censusTractFileName, encoding = 'utf-8') as inputFile:
+        for censusTract in inputFile: #for each ZIP code in the input file
+            censusTractNum = int(censusTract) #this line removes the line break in the ZIP code
+            censusTractString = str(censusTractNum) #convert to a string
+            print("Retrieving data for Census Tract " + censusTractString + "...")
+            censusTractArray.append(MyCensusTract(censusTractString))
+    return censusTractArray
+
 
 def outputDatabyCensusTractList(censusTractFileName, CSVoutputFileName, year, tableNumber):
     with open(censusTractFileName, encoding = 'utf-8') as inputFile:
@@ -151,15 +301,59 @@ def outputDatabyCensusTractList(censusTractFileName, CSVoutputFileName, year, ta
 #outputDatabyZIPCodeList("QueensZIPCodes.txt","LimitedEnglishZIP.csv","17","DP02")
 
 #Queens County Census Tract 2500 = Queensbridge (New York State's ID = 36 and Queens County's ID is 81)
-censusTract = "36081002500"
-print("Statistics for Census Tract 2500 (Queensbridge) in Queens County, NY")
-print("Unemployment Rate: " + str(format(getAmericanCommunitySurvey5YearEstimateValueByCensusTract("17","S2301",censusTract),'.1f')))  #unemployment rate. The code limits the output to one decimal place
-print("Percent without a High School Diploma or Equivalent: " + str(format(getAmericanCommunitySurvey5YearEstimateValueByCensusTract("17","S1501",censusTract),'.1f'))) #percentage of people without a HS diploma or equivalency
-print("Poverty Rate: " + str(format(getAmericanCommunitySurvey5YearEstimateValueByCensusTract("17","S1701",censusTract),'.1f'))) #poverty rate
-print("Percent with Limited English Language Proficiency: " + str(format(getAmericanCommunitySurvey5YearEstimateValueByCensusTract("17","DP02",censusTract),'.1f'))) #limited English language proficiency
+#censusTract = "36081002500"
+#print("Statistics for Census Tract 2500 (Queensbridge) in Queens County, NY")
+#print("Unemployment Rate: " + str(format(getAmericanCommunitySurvey5YearEstimateValueByCensusTract("17","S2301",censusTract),'.1f')))  #unemployment rate. The code limits the output to one decimal place
+#print("Percent without a High School Diploma or Equivalent: " + str(format(getAmericanCommunitySurvey5YearEstimateValueByCensusTract("17","S1501",censusTract),'.1f'))) #percentage of people without a HS diploma or equivalency
+#print("Poverty Rate: " + str(format(getAmericanCommunitySurvey5YearEstimateValueByCensusTract("17","S1701",censusTract),'.1f'))) #poverty rate
+#print("Percent with Limited English Language Proficiency: " + str(format(getAmericanCommunitySurvey5YearEstimateValueByCensusTract("17","DP02",censusTract),'.1f'))) #limited English language proficiency
 
 # Uncomment these lines to generate a CSV file of values based on an input file containing a list of ZIP codes
 #outputDatabyCensusTractList("NYCHAQueensCensusTracts.txt","UnemploymentCensusTract.csv","17","S2301")
 #outputDatabyCensusTractList("NYCHAQueensCensusTracts.txt","NoHighSchoolCensusTract.csv","17","S1501")
 #outputDatabyCensusTractList("NYCHAQueensCensusTracts.txt","PovertyCensusTract.csv","17","S1701")
 #outputDatabyCensusTractList("NYCHAQueensCensusTracts.txt","LimitedEnglishCensusTract.csv","17","DP02")
+
+#Queens County Census Tract 2500 = Queensbridge (New York State's ID = 36 and Queens County's ID is 81)
+#Queensbridge = MyCensusTract("36081002500")
+#print("Older Adult Statistics for Census Tract 2500 (Queensbridge) in Queens County, NY")
+#print("Total Population: " + str(Queensbridge.totalPopulation))
+#print("Total Number of Older Adults Age 65+: " + str(Queensbridge.totalOlderAdults65Plus))
+#print("Percentage Population Who Are Older Adults 65+: " + str(Queensbridge.percentageOlderAdults65Plus))
+#print("Total Number of Older Adults Age 55+: " + str(Queensbridge.totalOlderAdults55Plus))
+#print("Percentage Population Who Are Older Adults 55+: " + str(Queensbridge.percentageOlderAdults55Plus))
+#print("Total Number of Older Adults Age 65+ with Known Poverty Status: " + str(Queensbridge.totalOlderAdults65PlusKnownPovertyStatus))
+#print("Total Number of Older Adults Age 65+ with Income Below the Poverty Line: " + str(Queensbridge.povertyOlderAdults65Plus))
+#print("Percentage of Older Adults Age 65+ Who Are Poor: " + str(Queensbridge.povertyPercentageOlderAdults65Plus))
+#print("Total Number of Age 65+ Householders: " + str(Queensbridge.totalAge65PlusHouseholders))
+#print("Total Number of Age 65+ Householders Who Live Alone: " + str(Queensbridge.livingAloneAge65PlusHouseholders))
+#print("Percentage of Age 65+ Householders Who Live Alone: " + str(Queensbridge.livingAlonePercentageAge65PlusHouseholders))
+
+NYCHACensusTractsAnalysis = MyCensusTractList(createCensusTractArray("NYCHAQueensCensusTracts.txt"))
+#print("Older Adult Statistics for Given Census Tracts: ")
+#for censusTract in NYCHACensusTractList:
+#    print("Census Tract Number: " + censusTract.censusTractNum)
+#    print("Total Population: " + str(censusTract.totalPopulation))
+#    print("Total Number of Older Adults Age 65+: " + str(censusTract.totalOlderAdults65Plus))
+#    print("Percentage Population Who Are Older Adults 65+: " + str(censusTract.percentageOlderAdults65Plus))
+#    print("Total Number of Older Adults Age 55+: " + str(censusTract.totalOlderAdults55Plus))
+#    print("Percentage Population Who Are Older Adults 55+: " + str(censusTract.percentageOlderAdults55Plus))
+#    print("Total Number of Older Adults Age 65+ with Known Poverty Status: " + str(censusTract.totalOlderAdults65PlusKnownPovertyStatus))
+#    print("Total Number of Older Adults Age 65+ with Income Below the Poverty Line: " + str(censusTract.povertyOlderAdults65Plus))
+#    print("Percentage of Older Adults Age 65+ Who Are Poor: " + str(censusTract.povertyPercentageOlderAdults65Plus))
+#    print("Total Number of Age 65+ Householders: " + str(censusTract.totalAge65PlusHouseholders))
+#    print("Total Number of Age 65+ Householders Who Live Alone: " + str(censusTract.livingAloneAge65PlusHouseholders))
+#    print("Percentage of Age 65+ Householders Who Live Alone: " + str(censusTract.livingAlonePercentageAge65PlusHouseholders))
+print("Overall Descriptive Statistics for Given Census Tracts:")
+print("Percentage of Older Adults 65+: " + str(NYCHACensusTractsAnalysis.percentageOlderAdults65Plus))
+print("Percentage of Older Adults 55+: " + str(NYCHACensusTractsAnalysis.percentageOlderAdults55Plus))
+print("Percentage of Older Adults 65+ Who Live Below the Poverty Line: " + str(NYCHACensusTractsAnalysis.povertyPercentageOlderAdults65Plus))
+print("Percentage of Age 65+ Householders Who Live Alone: " + str(NYCHACensusTractsAnalysis.livingAlonePercentageAge65PlusHouseholders))
+
+#Older Adult Statistics
+#TO-DO:
+# implement censusTract class -- COMPLETED for older adults statistics. Need to implement community needs statistics
+# create an array of census tracts based on input from a file containing a list of census tracts to look up
+# create a census tract instance that stores summary data about the array of census tracts
+# output the summary data to the screen
+# output the array data to a file to create an audit trail
