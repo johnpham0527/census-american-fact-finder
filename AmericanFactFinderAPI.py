@@ -141,7 +141,7 @@ def getACS5YearJSONByCensusTract(year, tableNumber, censusTract): #return JSON d
     return jsonText
 
 
-class MyCensusTract:
+class MyCensusTract: #this class of objects retrieves and stores data for a given census tract
     def __init__(self, QueensCountyCensusTractNum):
         self.censusTractNum = QueensCountyCensusTractNum
         self.year = "17" #this refers to the American Community Survey yearly 5-year estimate dataset to use. We are using 2017 ("17") as the default.
@@ -228,7 +228,7 @@ class MyCensusTract:
         jsonText = getACS5YearJSONByCensusTract(self.year,"DP02",self.censusTractNum) #DP02 refers to the American Community Survey dataset called "Selected Social Characteristics in the United States"
         self.totalPopulation5Plus = jsonText["data"]["rows"][0]["cells"]["C398"]["value"] #C398 refers to the total population age 5 and older
         self.limitedEnglishTotalPopulation5Plus = jsonText["data"]["rows"][0]["cells"]["C409"]["value"] #C409 refers to the population age 5 and older who (1) speak a language other than English and (2) speak English less than very well
-        self.limitedEnglishPercentagePopulation5Plus = self.limitedEnglishTotalPopulation5Plus / self.totalPopulation25Plus * 100 #save this value as a number in the range of 0-100
+        self.limitedEnglishPercentagePopulation5Plus = self.limitedEnglishTotalPopulation5Plus / self.totalPopulation5Plus * 100 #save this value as a number in the range of 0-100
 
 class MyCensusTractList:
     def __init__(self, censusTractArray):
