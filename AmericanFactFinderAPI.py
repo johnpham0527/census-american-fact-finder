@@ -284,7 +284,7 @@ class MyCensusTractList:
         self.percentageOlderAdults55Plus = self.totalOlderAdults55Plus / self.totalPopulation * 100 #save this value as a number in the range of 0-100
         self.povertyPercentageOlderAdults65Plus = self.povertyOlderAdults65Plus / self.totalOlderAdults65PlusKnownPovertyStatus * 100 #save this value as a number in the range of 0-100  
         self.livingAlonePercentageAge65PlusHouseholders = self.livingAloneAge65PlusHouseholders / self.totalOlderAdults65Plus * 100 #divide number of older adult householders living alone by total number of older adults in the census tract. Save this value as a number in the range of 0-100
-        self.limitedEnglishPercentagePopulation5Plus = self.limitedEnglishTotalPopulation5Plus / self.totalPopulation25Plus * 100 #save this value as a number in the range of 0-100
+        self.limitedEnglishPercentagePopulation5Plus = self.limitedEnglishTotalPopulation5Plus / self.totalPopulation5Plus * 100 #save this value as a number in the range of 0-100
         self.povertyPercentage = self.povertyNum / self.populationWithKnownPovertyStatus * 100 #save this value as a number in the range of 0-100
         self.noHighSchoolPercentagePopulation25Plus = self.noHighSchoolTotalPopulation25Plus / self.totalPopulation25Plus * 100 #save this value as a number in the range of 0-100
         self.unemploymentPercentage = self.unemployedLaborForce / self.totalLaborForce * 100 #save this value as a number in the range of 0-100
