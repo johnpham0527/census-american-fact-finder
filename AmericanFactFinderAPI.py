@@ -35,6 +35,9 @@
 # Enter this URL into a web browser to explore population data for Queens County Census Tract 25: 
 #   http://factfinder.census.gov/service/data/v1/en/programs/ACS/datasets/17_5YR/tables/B01003/data/1400000US36081002500?maxResults=10&key=ea46e190165e1ee608d643fba987f8b3620ec1a9
 
+# Enter this URL into a web browser to explore population data for Queens County: 
+# http://factfinder.census.gov/service/data/v1/en/programs/ACS/datasets/17_5YR/tables/B01003/data/0500000US36081?maxResults=10&key=ea46e190165e1ee608d643fba987f8b3620ec1a9
+
 
 # Before running, ensure that censustracts.py is stored in the same directory
 import requests
