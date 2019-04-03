@@ -146,7 +146,11 @@ class MyCensusTract: #this class of objects retrieves and stores data for a give
     def fillCommunityNeedsProfile(self):
         jsonText = getACS5YearJSONByCensusTract(self.year,"S2301",self.censusTractNum) #S2301 refers to the American Community Survey dataset for employment and labor force statistics
         self.totalLaborForce = jsonText["data"]["rows"][0]["cells"]["C1"]["value"] #C1 key refers to the total population 16 years and over
-        self.unemploymentPercentage = jsonText["data"]["rows"][0]["cells"]["C7"]["value"] #C7 key refers to the unemployment rate for the population 16 years and over
+        try:
+            self.unemploymentPercentage = jsonText["data"]["rows"][0]["cells"]["C7"]["value"] #C7 key refers to the unemployment rate for the population 16 years and over
+        except KeyError:
+            print("Unemployment percentage value does not exist for Census Tract Number " + str(self.censusTractNum))
+            self.unemploymentPercentage = 0
         self.unemployedLaborForce = self.totalLaborForce * (self.unemploymentPercentage / 100)
 
         jsonText = getACS5YearJSONByCensusTract(self.year,"S1501",self.censusTractNum) #S1501 refers to the American Community Survey dataset for educational attainment
@@ -184,12 +188,36 @@ class MyCensusTract: #this class of objects retrieves and stores data for a give
         censusTractRetrievalString = "place_tractid='3651000-" + self.censusTractNum + "'"
         censusTract = client.get("47z2-4wuh", where=censusTractRetrievalString, content_type="json", order="place_tractid ASC",limit=1000)
         client.close()
-        self.coreMenCrudePrev = float(censusTract[0]["corem_crudeprev"]) #Model-based estimate for crude prevalence of older adult men aged >=65 years who are up to date on a core set of clinical preventive services: Flu shot past year, PPV shot ever, Colorectal cancer screening, 2016
-        self.coreWomenCrudePrev = float(censusTract[0]["corew_crudeprev"]) #Model-based estimate for crude prevalence of older adult women aged >=65 years who are up to date on a core set of clinical preventive services: Flu shot past year, PPV shot ever, Colorectal cancer screening, and Mammogram past 2 years, 2016
-        self.colonScreenCrudePrev = float(censusTract[0]["colon_screen_crudeprev"]) #Model-based estimate for crude prevalence of fecal occult blood test, sigmoidoscopy, or colonoscopy among adults aged 50–75 years, 2016
-        self.mammoUseCrudePrev = float(censusTract[0]["mammouse_crudeprev"]) #Model-based estimate for crude prevalence of mammography use among women aged 50–74 years, 2016
-        self.teethLostCrudePrev = float(censusTract[0]["teethlost_crudeprev"]) #Model-based estimate for crude prevalence of all teeth lost among adults aged >=65 years, 2016
-        self.geolocation = censusTract[0]["geolocation"] #Latitude, longitude of census tract centroid
+        try:
+            self.coreMenCrudePrev = float(censusTract[0]["corem_crudeprev"]) #Model-based estimate for crude prevalence of older adult men aged >=65 years who are up to date on a core set of clinical preventive services: Flu shot past year, PPV shot ever, Colorectal cancer screening, 2016
+        except IndexError:
+            print("No value found for coreMenCrudePrev Property for Census Tract Number " + str(self.censusTractNum))
+            self.coreMenCrudePrev = 0
+        try: 
+            self.coreWomenCrudePrev = float(censusTract[0]["corew_crudeprev"]) #Model-based estimate for crude prevalence of older adult women aged >=65 years who are up to date on a core set of clinical preventive services: Flu shot past year, PPV shot ever, Colorectal cancer screening, and Mammogram past 2 years, 2016
+        except IndexError:
+            print("No value found for coreWomenCrudePrev Property for Census Tract Number " + str(self.censusTractNum))
+            self.coreWomenCrudePrev = 0
+        try: 
+            self.colonScreenCrudePrev = float(censusTract[0]["colon_screen_crudeprev"]) #Model-based estimate for crude prevalence of fecal occult blood test, sigmoidoscopy, or colonoscopy among adults aged 50–75 years, 2016
+        except IndexError:
+            print("No value found for colonScreenCrudePrev Property for Census Tract Number " + str(self.censusTractNum))
+            self.colonScreenCrudePrev = 0
+        try: 
+            self.mammoUseCrudePrev = float(censusTract[0]["mammouse_crudeprev"]) #Model-based estimate for crude prevalence of mammography use among women aged 50–74 years, 2016
+        except IndexError:
+            print("No value found for mammoUseCrudePrev Property for Census Tract Number " + str(self.censusTractNum))
+            self.mammoUseCrudePrev = 0
+        try: 
+            self.teethLostCrudePrev = float(censusTract[0]["teethlost_crudeprev"]) #Model-based estimate for crude prevalence of all teeth lost among adults aged >=65 years, 2016
+        except IndexError:
+            print("No value found for teethLostCrudePrev Property for Census Tract Number " + str(self.censusTractNum))
+            self.teethLostCrudePrev = 0
+        try: 
+            self.geolocation = censusTract[0]["geolocation"] #Latitude, longitude of census tract centroid
+        except IndexError:
+            print("No value found for geolocation Property for Census Tract Number " + str(self.censusTractNum))
+            self.geolocation = ""
         try:
             self.coreMenPercentage = self.coreMenCrudePrev / self.totalMales65Plus * 100 #save this value as a number in the range of 0-100
         except ZeroDivisionError:
