@@ -191,7 +191,7 @@ def outputDatabyCensusTractList(censusTractFileName, CSVoutputFileName, year, ta
 #print("Percentage of Age 65+ Householders Who Live Alone: " + str(Queensbridge.livingAlonePercentageAge65PlusHouseholders))
 
 NYCHACensusTractsAnalysis = MyCensusTractList(createCensusTractArray("NYCHAQueensCensusTracts.txt")) #this creates an array of census tract objects, given a list of census tracts read in from a file
-print("Summary of Descriptive Statistics for the Given " + str(NYCHACensusTractsAnalysis.censusTracyArrayLength) + " Census Tract(s):")
+print("Summary of Descriptive Statistics for the Given " + str(NYCHACensusTractsAnalysis.censusTractArrayLength) + " Census Tract(s):")
 print("Percentage of older adults 65+: " + "{:.1f}".format(NYCHACensusTractsAnalysis.percentageOlderAdults65Plus)+ "%") #print out with one decimal place
 print("Percentage of older adults 55+: " + "{:.1f}".format(NYCHACensusTractsAnalysis.percentageOlderAdults55Plus)+ "%")
 print("Percentage of older adults 65+ who are below poverty level: " + "{:.1f}".format(NYCHACensusTractsAnalysis.povertyPercentageOlderAdults65Plus)+ "%")
@@ -200,4 +200,4 @@ print("Percentage of all residents who are Limited English Proficient: " + "{:.1
 print("Percentage of all residents who are below poverty level: " + "{:.1f}".format(NYCHACensusTractsAnalysis.povertyPercentage)+ "%")
 print("Percentage of all residents who have not attained a high school diploma or its equivalent: " + "{:.1f}".format(NYCHACensusTractsAnalysis.noHighSchoolPercentagePopulation25Plus)+ "%")
 print("Percentage of all residents who are unemployed: " + "{:.1f}".format(NYCHACensusTractsAnalysis.unemploymentPercentage)+ "%")
-#NYCHACensusTractsAnalysis.exportValues("NYCHA_Data.csv") #output the data to a CSV file
+NYCHACensusTractsAnalysis.exportValues("NYCHA_Data.csv") #output the data to a CSV file
